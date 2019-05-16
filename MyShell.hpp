@@ -3,9 +3,12 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cstdio>
+#include <sys/types.h>
+#include <pwd.h>
 #include <string.h>
 
 
+// 将输入进来的命令根据空格拆分开
 void split(char *command, char *argv[])
 {
     char *p = strtok(command, " ");
@@ -19,6 +22,7 @@ void split(char *command, char *argv[])
     argv[i] = nullptr;
 }
 
+// 创建子进程，并让子进程执行刚才输入的命令
 int DoExecv(char *argv[])
 {
     // 创建子进程
@@ -51,6 +55,9 @@ void MyShell(void)
     while (1)
     {
         // 1.打印提示符
+        // 获取名户名
+        struct *passwd user_info;
+        user_info = getpwuid(getuid());
         std::cout << "[MyShell@localhost gerald]~ ";
         // 刷新缓冲区把这个提示符打出来
         fflush(stdout);
