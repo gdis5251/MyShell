@@ -7,17 +7,15 @@
 
 #include <string>
 #include <vector>
-#include "utilities.hpp"
 #include <unistd.h>
 #include <functional>
 #include <map>
 #include <utility>
-#include "MyShell.hpp"
 
-extern std::string host;
-extern std::string user;
-extern std::string path;
+#include "utilities.hpp"
 
+typedef std::map<std::string, std::string> Alias;
+typedef std::map<std::string, std::string>::iterator AliasIter;
 typedef std::function<int(char**, size_t)> func;
 
 std::map<std::string, func> builtin_function;
@@ -27,38 +25,44 @@ namespace builtin{
     int pwd(char **, size_t);
 }
 
-int builtin::cd(char **argv, size_t args);
-
-typedef std::map<std::string, std::string> Alias;
-typedef std::map<std::string, std::string>::iterator AliasIter;
-
-void cd(const std::string& targetPath)
+int builtin::cd(char **argv, size_t args)
 {
-    if(args>2)
+    if(args > 2 )
     {
-        // to many args
+        std::cout << "Shell: too many args" << std::endl;
         return -1;
     }
-    std::string targetPath(argv[1]);
-    std::string realPath;
-    if(targetPath[0] != '~')
+    int ret;
+    std::string fullPath;
+    if(args == 1)  //没有参数
     {
-        realPath = targetPath;
-        path = realPath;
+        fullPath = "/home/";
+        fullPath += user;
     }
-    else
+    else if(argv[1][0] == '~')  //参数是用户的家目录
     {
-        realPath += "/home/";
-        realPath += user;
-        realPath += '/';
-        realPath += targetPath.substr(1);
-        path = targetPath;
+        fullPath = "/home/";
+        fullPath += user;
+        fullPath += argv[1][1];
     }
-    return chdir(realPath.c_str());
+    else if(argv[1][0] == '/')   //绝对路径
+    {
+        fullPath = argv[1];
+    } else{                   //从当前路径开始
+        fullPath = path;
+        fullPath += '/';
+        fullPath += argv[1];
+    }
+    ret = chdir(fullPath.c_str());
+    if(ret == 0)
+        path = fullPath;
+    return ret;
 }
 
 int builtin::pwd(char **argv, size_t args)
 {
+    (void)argv;
+    (void)args;
     std::cout << path << std::endl;
     fflush(stdout);
     return 1;
