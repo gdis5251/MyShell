@@ -7,10 +7,14 @@
 #include <string>
 #include <vector>
 #include "utilities.hpp"
+#include "MyShell.hpp"
 
 extern std::string host;
 extern std::string user;
 extern std::string path;
+
+typedef std::map<std::string, std::string> Alias;
+typedef std::map<std::string, std::string>::iterator AliasIter;
 
 void cd(const std::string& targetPath)
 {

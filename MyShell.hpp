@@ -8,7 +8,15 @@
 #include <string.h>
 #include <cstring>
 #include "utilities.hpp"
+#include <map>
 
+// 维护一个键值对，用来定义别名
+typedef std::map<std::string, std::string> Alias;
+typedef std::map<std::string, std::string>::iterator AliasIter;
+
+std::string host = "localhost";
+std::string user = "user";
+std::string path = "~";
 
 // 将输入进来的命令根据空格拆分开
 void split(char *command, char *argv[])
@@ -52,9 +60,6 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-std::string host = "localhost";
-std::string user = "user";
-std::string path = "~";
 
 
 void MyShell()
@@ -63,7 +68,10 @@ void MyShell()
     auto argsbuf = new char*[MAX_ATGS]();
     
     // 初始化MyShll
-    utils::Init();
+    Alias alias;
+    utils::Init(alias);
+
+
 
     while (true)
     {

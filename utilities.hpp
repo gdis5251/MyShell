@@ -10,10 +10,15 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <map>
 
 extern std::string host;
 extern std::string user;
 extern std::string path;
+
+// 维护一个键值对，用来定义别名
+typedef std::map<std::string, std::string> Alias;
+typedef std::map<std::string, std::string>::iterator AliasIter;
 
 // 缓冲区的最大长度
 const size_t BUF_SIZE = 1024;
@@ -23,11 +28,17 @@ const size_t MAX_ATGS = 1024;
 namespace utils{
     size_t getline(char *, size_t);
     void changedir(const std::string&);
-    void Init(void);
+    void Init(Alias& alias);
     
 }
 
-void utils::Init(void)
+void MakeDefualtAlias(Alias& alias)
+{
+    // 在这里添加一启动就自定义的别名
+    alias["ll"] = "ls -l";
+}
+
+void utils::Init(Alias& alias)
 {
     // 获取用户名
     struct passwd *user_info;
@@ -45,6 +56,8 @@ void utils::Init(void)
     host = buf;
     delete[] buf;
 
+    // 生成一个默认的键值对
+    MakeDefualtAlias(alias);
 }
 
 size_t utils::getline(char *buf, size_t bufsize)
