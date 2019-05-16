@@ -26,6 +26,8 @@ const size_t BUF_SIZE = 1024;
 const size_t MAX_ATGS = 1024;
 
 namespace utils{
+    size_t GetLine(char *, size_t);
+    int Split(char *, char **, size_t);
     size_t getline(char *, size_t);
     void changedir(const std::string&);
     void Init(Alias& alias);
@@ -60,7 +62,7 @@ void utils::Init(Alias& alias)
     MakeDefualtAlias(alias);
 }
 
-size_t utils::getline(char *buf, size_t bufsize)
+size_t utils::GetLine(char *buf, size_t bufsize)
 {
     int count =0;
     char c=0;
@@ -86,9 +88,23 @@ size_t utils::getline(char *buf, size_t bufsize)
     return count;
 }
 
-void utils::changedir(const std::string & dir)
+int utils::Split(char *command, char **argv, size_t cmdlength)
 {
-    //TODO: change dir
+    int idx = 0;
+    int cnt=0;     //参数个数
+    while(idx<cmdlength)
+    {
+        //处理空格
+        while(command[idx] == ' ')
+            ++idx;
+
+        argv[cnt++] = command+idx;//参数的开始
+        while(command[idx] != ' ')
+            ++idx;
+        command[idx++] = 0;  //参数结尾补0
+    }
+    argv[cnt] = 0;//参数数组结尾nullptr
+    return cnt;
 }
 
 #endif //MYSHELL_UTILITIES_HPP
