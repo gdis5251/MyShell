@@ -12,23 +12,33 @@ extern std::string host;
 extern std::string user;
 extern std::string path;
 
-void cd(const std::string& targetPath)
+namespace builtin{
+    int cd(const std::string&);
+    std::string& pwd();
+}
+
+int builtin::cd(const std::string& targetPath)
 {
     std::string realPath;
-    if(targetPath[0] !='~')
+    if(targetPath[0] != '~')
     {
         realPath = targetPath;
         path = realPath;
     }
     else
     {
-        realPath+="/home/";
-        realPath+=user;
-        realPath+='/';
-        realPath+=targetPath.substr(1);
+        realPath += "/home/";
+        realPath += user;
+        realPath += '/';
+        realPath += targetPath.substr(1);
         path = targetPath;
     }
-    utils::changedir(realPath);
+    return chdir(realPath.c_str());
+}
+
+std::string& builtin::pwd()
+{
+    return path;
 }
 
 #endif //MYSHELL_BUILTINCOMMAND_HPP
