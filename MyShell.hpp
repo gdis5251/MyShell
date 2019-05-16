@@ -22,6 +22,8 @@ void split(char *command, char **argv)
 }
  */
 
+extern std::map<std::string, func> builtin_function;
+
 int DoExecv(char *argv[])
 {
     // 创建子进程
@@ -31,7 +33,7 @@ int DoExecv(char *argv[])
 
     if (id == 0)// Child
     {
-        execvp(argv[0], argv);
+       execvp(argv[0], argv);
 
 
     }
@@ -49,6 +51,19 @@ int DoExecv(char *argv[])
     return -1;
 }
 
+int Parse(char **argv, size_t args)
+{
+    std::string f(argv[0]);
+    if(builtin_function.count(f))
+    {
+        return builtin_function[f](argv, args);
+    }
+    else
+    {
+        return DoExecv(argv);
+    }
+}
+
 std::string host = "localhost";
 std::string user = "user";
 std::string path = "~";
@@ -60,30 +75,34 @@ const size_t MAX_ARGS = 1024;
 
 void MyShell()
 {
+    InitBuiltinFunction();
+
     auto buf = new char[BUF_SIZE]();
     auto argsbuf = new char*[MAX_ARGS]();
+
     while (true)
     {
         // 1.打印提示符
-        //std::cout << "[MyShell@localhost gerald]~ ";
         std::cout << '[' << user << '@' << host<<' '<< path << "]$";
+
         // 刷新缓冲区把这个提示符打出来
         fflush(stdout);
 
         // 2.接收产出
         char *command_buf = buf;
-        //gets(command);
         size_t length = utils::GetLine(command_buf, BUF_SIZE);
 
         // 3.分割命令行参数
         char **argv = argsbuf;
         size_t args = utils::Split(command_buf, argv, length);
 
+        int exit_code = Parse(argv, args);
         // 4.execv
-        int exit_code = DoExecv(argv);
+        //int exit_code = DoExecv(argv);
         if(exit_code == -1)
             break;
     }
+
     delete[] argsbuf;
     delete[] buf;
 }
