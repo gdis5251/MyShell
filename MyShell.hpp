@@ -47,9 +47,9 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-std::string host = "localhost";
-std::string user = "user";
-std::string path = "~";
+static std::string host = "localhost";
+static std::string user = "user";
+static std::string path = "~";
 
 //命令的最大长度
 const size_t BUF_SIZE = 1024;
