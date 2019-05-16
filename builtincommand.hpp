@@ -12,6 +12,7 @@
 #include <functional>
 #include <map>
 #include <utility>
+#include "MyShell.hpp"
 
 extern std::string host;
 extern std::string user;
@@ -26,7 +27,12 @@ namespace builtin{
     int pwd(char **, size_t);
 }
 
-int builtin::cd(char **argv, size_t args)
+int builtin::cd(char **argv, size_t args);
+
+typedef std::map<std::string, std::string> Alias;
+typedef std::map<std::string, std::string>::iterator AliasIter;
+
+void cd(const std::string& targetPath)
 {
     if(args>2)
     {

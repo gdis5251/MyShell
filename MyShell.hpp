@@ -3,12 +3,26 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cstdio>
+#include <sys/types.h>
+#include <pwd.h>
+#include <string.h>
 #include <cstring>
 #include "utilities.hpp"
 #include "builtincommand.hpp"
 
 /*
 void split(char *command, char **argv)
+#include <map>
+
+// 维护一个键值对，用来定义别名
+typedef std::map<std::string, std::string> Alias;
+typedef std::map<std::string, std::string>::iterator AliasIter;
+
+
+
+// 将输入进来的命令根据空格拆分开
+void split(char *command, char *argv[])
+
 {
     char *p = strtok(command, " ");
     int i = 0;
@@ -21,9 +35,13 @@ void split(char *command, char **argv)
     argv[i] = nullptr;
 }
  */
+std::string host = "localhost";
+std::string user = "user";
+std::string path = "~";
 
 extern std::map<std::string, func> builtin_function;
 
+// 创建子进程，并让子进程执行刚才输入的命令
 int DoExecv(char *argv[])
 {
     // 创建子进程
@@ -64,14 +82,12 @@ int Parse(char **argv, size_t args)
     }
 }
 
-std::string host = "localhost";
-std::string user = "user";
-std::string path = "~";
 
 //命令的最大长度
 const size_t BUF_SIZE = 1024;
 //最大参数个数
 const size_t MAX_ARGS = 1024;
+
 
 void MyShell()
 {
@@ -79,10 +95,19 @@ void MyShell()
 
     auto buf = new char[BUF_SIZE]();
     auto argsbuf = new char*[MAX_ARGS]();
+    auto argsbuf = new char*[MAX_ATGS]();
+    
+    // 初始化MyShll
+    Alias alias;
+    utils::Init(alias);
+
+
 
     while (true)
     {
         // 1.打印提示符
+        
+        //std::cout << "[MyShell@localhost gerald]~ ";
         std::cout << '[' << user << '@' << host<<' '<< path << "]$";
 
         // 刷新缓冲区把这个提示符打出来
