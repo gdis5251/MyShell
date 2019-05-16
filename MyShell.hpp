@@ -56,10 +56,6 @@ std::string host = "localhost";
 std::string user = "user";
 std::string path = "~";
 
-//命令的最大长度
-const size_t BUF_SIZE = 1024;
-//最大参数个数
-const size_t MAX_ATGS = 1024;
 
 void MyShell()
 {
