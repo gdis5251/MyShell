@@ -52,9 +52,9 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-static std::string host = "localhost";
-static std::string user = "user";
-static std::string path = "~";
+std::string host = "localhost";
+std::string user = "user";
+std::string path = "~";
 
 //命令的最大长度
 const size_t BUF_SIZE = 1024;
@@ -65,13 +65,14 @@ void MyShell()
 {
     auto buf = new char[BUF_SIZE]();
     auto argsbuf = new char*[MAX_ATGS]();
+    
+    // 初始化MyShll
+    utils::Init();
+
     while (true)
     {
         // 1.打印提示符
-        // 获取名户名
-        struct *passwd user_info;
-        user_info = getpwuid(getuid());
-        std::cout << "[MyShell@localhost gerald]~ ";
+        
         //std::cout << "[MyShell@localhost gerald]~ ";
         std::cout << '[' << user << '@' << host<<' '<< path << "]$";
         // 刷新缓冲区把这个提示符打出来
