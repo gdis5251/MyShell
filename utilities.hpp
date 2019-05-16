@@ -10,6 +10,7 @@
 
 namespace utils{
     size_t getline(char *, size_t);
+    void changedir(const std::string&);
 }
 
 size_t utils::getline(char *buf, size_t bufsize)
@@ -36,6 +37,11 @@ size_t utils::getline(char *buf, size_t bufsize)
     }
     buf[count] = '\0';
     return count;
+}
+
+void utils::changedir(const std::string & dir)
+{
+    //TODO: change dir
 }
 
 #endif //MYSHELL_UTILITIES_HPP

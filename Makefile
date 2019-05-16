@@ -1,5 +1,5 @@
 Main:Main.cpp
-	g++ -o $@ $^ utilities.hpp -std=c++11
+	g++ -o $@ $^ utilities.hpp builtincommand.hpp -std=c++11
 
 .PHONY:clean
 clean:
