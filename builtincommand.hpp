@@ -54,8 +54,15 @@ int builtin::cd(char **argv, size_t args)
         fullPath += argv[1];
     }
     ret = chdir(fullPath.c_str());
+
+
+
     if(ret == 0)
         path = fullPath;
+    char *buf = new char[BUF_SIZE];
+    path = getcwd(buf, BUF_SIZE);
+    delete[] buf;
+
     return ret;
 }
 
