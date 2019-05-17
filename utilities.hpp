@@ -15,23 +15,20 @@
 extern std::string host;
 extern std::string user;
 extern std::string path;
+extern std::string relpath;
+extern std::string userhome;
+
+extern const size_t BUF_SIZE;
+extern const size_t MAX_ARGS;
 
 // 维护一个键值对，用来定义别名
 typedef std::map<std::string, std::string> Alias;
 typedef std::map<std::string, std::string>::iterator AliasIter;
 
-// 缓冲区的最大长度
-const size_t BUF_SIZE = 1024;
-// 最大参数个数
-const size_t MAX_ATGS = 1024;
-
 namespace utils{
     size_t GetLine(char *, size_t);
     int Split(char *, char **, size_t);
-    size_t getline(char *, size_t);
-    void changedir(const std::string&);
     void Init(Alias& alias);
-    
 }
 
 void MakeDefualtAlias(Alias& alias)
@@ -57,6 +54,10 @@ void utils::Init(Alias& alias)
     gethostname(buf, BUF_SIZE);
     host = buf;
     delete[] buf;
+
+    //设置用户目录
+    userhome += "/home/";
+    userhome += user;
 
     // 生成一个默认的键值对
     MakeDefualtAlias(alias);
@@ -103,7 +104,7 @@ int utils::Split(char *command, char **argv, size_t cmdlength)
             ++idx;
         command[idx++] = 0;  //参数结尾补0
     }
-    argv[cnt] = 0;//参数数组结尾nullptr
+    argv[cnt] = nullptr;//参数数组结尾nullptr
     return cnt;
 }
 
