@@ -17,6 +17,7 @@ extern std::string user;
 extern std::string path;
 extern std::string relpath;
 extern std::string userhome;
+extern void InitBuiltinFunction();
 
 extern const size_t BUF_SIZE;
 extern const size_t MAX_ARGS;
@@ -61,6 +62,7 @@ void utils::Init(Alias& alias)
 
     // 生成一个默认的键值对
     MakeDefualtAlias(alias);
+    InitBuiltinFunction(); 
 }
 
 size_t utils::GetLine(char *buf, size_t bufsize)
