@@ -32,31 +32,19 @@ int builtin::cd(char **argv, size_t args)
         std::cout << "Shell: too many args" << std::endl;
         return -1;
     }
-    int ret;
-    std::string fullPath;
-    if(args == 1)  //没有参数
+	std::string p;
+    if(argv[1] == nullptr)
+        p = userhome;
+	else if(argv[1][0] == '~' )
     {
-        fullPath = "/home/";
-        fullPath += user;
-    }
-    else if(argv[1][0] == '~')  //参数是用户的家目录
-    {
-        fullPath = "/home/";
-        fullPath += user;
-        fullPath += argv[1][1];
-    }
-    else if(argv[1][0] == '/')   //绝对路径
-    {
-        fullPath = argv[1];
-    } else{                   //从当前路径开始
-        fullPath = path;
-        fullPath += '/';
-        fullPath += argv[1];
-    }
-    ret = chdir(fullPath.c_str());
-    if(ret == 0)
-        path = fullPath;
-    return ret;
+	    p += userhome;
+	    p += argv[1][1];
+    } else{
+	    p = argv[1];
+	}
+	int ret = chdir(p.c_str());
+	if(ret == 0) path = getcwd(NULL, 0);
+    return  ret;
 }
 
 int builtin::pwd(char **argv, size_t args)
