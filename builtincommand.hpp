@@ -37,6 +37,7 @@ int builtin::cd(char **argv, size_t args)
         p = userhome;
 	else if(argv[1][0] == '~' )
     {
+
 	    p += userhome;
 	    p += argv[1][1];
     } else{

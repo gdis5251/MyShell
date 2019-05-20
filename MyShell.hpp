@@ -74,7 +74,6 @@ void RelPath()
 
 void MyShell()
 {
-    InitBuiltinFunction();
 
     auto buf = new char[BUF_SIZE]();
     auto argsbuf = new char*[MAX_ARGS]();

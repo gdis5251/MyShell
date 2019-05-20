@@ -68,7 +68,7 @@
     ```
 
     `gethostname()`是获取当前主机名的系统调用。
-    
+  
 - 支持内建命令 在得到命令行后解析判断是内建命令还是外部可执行程序
 
   - 用c++标准库的map 和 functional 映射函数名和函数调用
@@ -83,3 +83,9 @@
   - pwd显示当前所在目录的绝对路径
   - shell输出的提示是如果在当前登录用户的家目录下输出~/...
     否则输出绝对路径
+  
+- 解决XShell 点击Backspace 出现 ^H 的问题。
+
+  - ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190517180018298.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MjY3ODUwNw==,size_16,color_FFFFFF,t_70)
+  - ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190517180050375.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MjY3ODUwNw==,size_16,color_FFFFFF,t_70)
+
