@@ -91,10 +91,11 @@ void MyShell()
         // 刷新缓冲区把这个提示符打出来
         fflush(stdout);
 
-        // 2.接收产出
+        // 2.接收产出  length  参数个数
         char *command_buf = buf;
         size_t length = utils::GetLine(command_buf, BUF_SIZE);
-
+        if(length == 0)
+            continue;
         // 3.分割命令行参数
         char **argv = argsbuf;
         int args = utils::Split(command_buf, argv, length);
