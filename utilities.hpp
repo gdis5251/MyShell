@@ -36,6 +36,10 @@ void MakeDefualtAlias(Alias& alias)
 {
     // 在这里添加一启动就自定义的别名
     alias["ll"] = "ls -l";
+    alias["rm"] = "rm -i";
+    alias["cp"] = "cp -i";
+    alias["mv"] = "mv -i";
+    alias["l"] = "ls -a";
 }
 
 void utils::Init(Alias& alias)
@@ -69,7 +73,7 @@ size_t utils::GetLine(char *buf, size_t bufsize)
 {
     int count =0;
     char c=0;
-    while(count < bufsize)
+    while(count < static_cast<int>(bufsize))
     {
         c = static_cast<char>(std::cin.get());
         if(c == '\n')
@@ -93,16 +97,16 @@ size_t utils::GetLine(char *buf, size_t bufsize)
 
 int utils::Split(char *command, char **argv, size_t cmdlength)
 {
-    int idx = 0;
-    int cnt=0;     //参数个数
-    while(idx<cmdlength)
+    size_t idx = 0;
+    int cnt = 0;     //参数个数
+    while(idx < cmdlength)
     {
-        //处理空格
-        while(command[idx] == ' ')
-            ++idx;
+        // //处理空格
+        // while(command[idx] == ' ')
+        //     ++idx;
 
         argv[cnt++] = command+idx;//参数的开始
-        while(command[idx] != ' ')
+        while(idx < cmdlength && command[idx] != ' ')
             ++idx;
         command[idx++] = 0;  //参数结尾补0
     }

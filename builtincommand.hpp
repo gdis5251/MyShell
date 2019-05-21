@@ -45,7 +45,7 @@ int builtin::cd(char **argv, size_t args)
 	}
 	int ret = chdir(p.c_str());
 	if(ret == 0) path = getcwd(NULL, 0);
-    return  ret;
+    return ret;
 }
 
 int builtin::pwd(char **argv, size_t args)
@@ -61,7 +61,6 @@ void InitBuiltinFunction()
 {
     builtin_function.insert(std::make_pair<std::string, func>("cd", builtin::cd));
     builtin_function.insert(std::make_pair<std::string, func>("pwd", builtin::pwd));
-
 }
 
 #endif //MYSHELL_BUILTINCOMMAND_HPP

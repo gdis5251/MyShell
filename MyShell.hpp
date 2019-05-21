@@ -49,7 +49,7 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-int Parse(char **argv, size_t args)
+int Parse(char **argv, size_t args, Alias& alias)
 {
     std::string f(argv[0]);
     if(builtin_function.count(f))
@@ -58,6 +58,25 @@ int Parse(char **argv, size_t args)
     }
     else
     {
+        // 判断是否是 alias 定义的别名
+        if (alias.count(f))
+        { 
+            f = alias[f.c_str()];
+
+            // 重新拆分字符串 
+            char *tmp_argv[BUF_SIZE] = {0};
+            int num = utils::Split(const_cast<char *>(f.c_str()), tmp_argv, f.size());  
+
+            argv[0] = tmp_argv[0];
+            // 将后续的参数补到 argv 里
+            int i = 0;
+            for (i = 1; i < num; i++)
+            {
+                argv[args + i - 1] = tmp_argv[i];
+            }
+            argv[args + i - 1] = 0;
+        }
+
         return DoExecv(argv);
     }
 }
@@ -86,7 +105,7 @@ void MyShell()
     {
         // 1.打印提示符
         RelPath();
-        std::cout << '[' << user << '@' << host<<' '<< relpath << "]$";
+        std::cout << '[' << user << '@' << host<<' '<< relpath << "]$ ";
 
         // 刷新缓冲区把这个提示符打出来
         fflush(stdout);
@@ -100,7 +119,7 @@ void MyShell()
         char **argv = argsbuf;
         int args = utils::Split(command_buf, argv, length);
 
-        int exit_code = Parse(argv, static_cast<size_t>(args));
+        int exit_code = Parse(argv, static_cast<size_t>(args), alias);
 
         if(exit_code == -1)
             break;
