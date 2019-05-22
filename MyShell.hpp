@@ -75,6 +75,16 @@ int Parse(char **argv, size_t args, Alias& alias)
                 argv[args + i - 1] = tmp_argv[i];
             }
             argv[args + i - 1] = 0;
+
+            // 更新 args
+            args += i - 1;
+        }
+
+        // ls 的系列命令需要加颜色
+        if (strcmp(argv[0], "ls") == 0)
+        {
+            argv[args] = const_cast<char*>("--color=auto");
+            argv[args + 1] = 0;
         }
 
         return DoExecv(argv);
