@@ -62,10 +62,12 @@ int Parse(char **argv, size_t args, Alias& alias)
         if (alias.count(f))
         { 
             f = alias[f.c_str()];
+            std::string tmp_str;
+            tmp_str = f.c_str();
 
             // 重新拆分字符串 
             char *tmp_argv[BUF_SIZE] = {0};
-            int num = utils::Split(const_cast<char *>(f.c_str()), tmp_argv, f.size());  
+            int num = utils::Split(const_cast<char *>(tmp_str.c_str()), tmp_argv, f.size());  
 
             argv[0] = tmp_argv[0];
             // 将后续的参数补到 argv 里
