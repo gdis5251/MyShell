@@ -49,35 +49,22 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-int Parse(char **argv, size_t args, Alias& alias)
+int Parse(utils::argument *args)
 {
-    std::string f(argv[0]);
-    if(builtin_function.count(f))
+    char **arg = new char*[64];
+    int i=0;
+    for(auto it = args->argsvec[0].begin(); it!=args->argsvec[0].end(); ++it)
     {
-        return builtin_function[f](argv, args);
+        arg[i++] = *it;
+    }
+
+    if(builtin_function.count(arg[0]))
+    {
+        return builtin_function[arg[0]](arg, args->argsvec.size());
     }
     else
     {
-        // 判断是否是 alias 定义的别名
-        if (alias.count(f))
-        { 
-            f = alias[f.c_str()];
-
-            // 重新拆分字符串 
-            char *tmp_argv[BUF_SIZE] = {0};
-            int num = utils::Split(const_cast<char *>(f.c_str()), tmp_argv, f.size());  
-
-            argv[0] = tmp_argv[0];
-            // 将后续的参数补到 argv 里
-            int i = 0;
-            for (i = 1; i < num; i++)
-            {
-                argv[args + i - 1] = tmp_argv[i];
-            }
-            argv[args + i - 1] = 0;
-        }
-
-        return DoExecv(argv);
+        return DoExecv(arg);
     }
 }
 
@@ -116,10 +103,9 @@ void MyShell()
         if(length == 0)
             continue;
         // 3.分割命令行参数
-        char **argv = argsbuf;
-        int args = utils::Split(command_buf, argv, length);
+        utils::argument* argv = utils::Split(command_buf, length, alias);
 
-        int exit_code = Parse(argv, static_cast<size_t>(args), alias);
+        int exit_code = Parse(argv);
 
         if(exit_code == -1)
             break;

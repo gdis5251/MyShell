@@ -11,29 +11,60 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <map>
+#include <vector>
+#include <list>
 
 extern std::string host;
 extern std::string user;
 extern std::string path;
 extern std::string relpath;
 extern std::string userhome;
+
 extern void InitBuiltinFunction();
 
 extern const size_t BUF_SIZE;
 extern const size_t MAX_ARGS;
 
+const int NO_ALIAS = -123;
+
 // 维护一个键值对，用来定义别名
 typedef std::map<std::string, std::string> Alias;
 typedef std::map<std::string, std::string>::iterator AliasIter;
 
-namespace utils{
+namespace utils {
+    struct argument;
+
     size_t GetLine(char *, size_t);
-    int Split(char *, char **, size_t);
-    void Init(Alias& alias);
+
+    argument *Split(char *, size_t, Alias &);
+
+    void Init(Alias &alias);
+
+    int ReplaceAlias(argument *args, Alias &alias);
+
+    inline void SkipSpace(char *ps, int &idx) {
+        if (*ps != 0 && *ps == ' ')
+            ++idx;
+    }
 }
 
-void MakeDefualtAlias(Alias& alias)
-{
+struct utils::argument {
+    argument()
+    {//别名缓冲区
+        aliasbuf = new char*[16];
+        for(int i=0; i<16; ++i)
+        {
+            aliasbuf[i] = new char[64];
+        }
+    }
+    char *redirecFile = nullptr; //重定向的目标文件
+    std::vector<std::list<char *>> argsvec;
+    char **aliasbuf;
+    //这个vector保存 参数列表 用于管道
+    //里面的list保存的就是参数的字符串
+};
+
+void MakeDefualtAlias(Alias &alias) {
     // 在这里添加一启动就自定义的别名
     alias["ll"] = "ls -l";
     alias["rm"] = "rm -i";
@@ -42,8 +73,7 @@ void MakeDefualtAlias(Alias& alias)
     alias["l"] = "ls -a";
 }
 
-void utils::Init(Alias& alias)
-{
+void utils::Init(Alias &alias) {
     // 获取用户名
     struct passwd *user_info;
     user_info = getpwuid(getuid());
@@ -66,27 +96,21 @@ void utils::Init(Alias& alias)
 
     // 生成一个默认的键值对
     MakeDefualtAlias(alias);
-    InitBuiltinFunction(); 
+    InitBuiltinFunction();
 }
 
-size_t utils::GetLine(char *buf, size_t bufsize)
-{
-    int count =0;
-    char c=0;
-    while(count < static_cast<int>(bufsize))
-    {
+size_t utils::GetLine(char *buf, size_t bufsize) {
+    size_t count = 0;
+    char c = 0;
+    while (count < bufsize) {
         c = static_cast<char>(std::cin.get());
-        if(c == '\n')
+        if (c == '\n')
             break;
-        else
-        {
-            if(c == '\\')
-            {
+        else {
+            if (c == '\\') {
                 std::cin.get();
                 std::cout << '>';
-            }
-            else
-            {
+            } else {
                 buf[count++] = c;
             }
         }
@@ -95,23 +119,74 @@ size_t utils::GetLine(char *buf, size_t bufsize)
     return count;
 }
 
-int utils::Split(char *command, char **argv, size_t cmdlength)
-{
-    size_t idx = 0;
-    int cnt = 0;     //参数个数
-    while(idx < cmdlength)
-    {
-        // //处理空格
-        // while(command[idx] == ' ')
-        //     ++idx;
+utils::argument *utils::Split(char *cmdbuf, size_t length, Alias &alias) {
+    using namespace utils;
 
-        argv[cnt++] = command+idx;//参数的开始
-        while(idx < cmdlength && command[idx] != ' ')
-            ++idx;
-        command[idx++] = 0;  //参数结尾补0
+    argument *arg = new argument();
+    int idx = 0;
+
+    while (idx < length) {
+        std::list<char *> vec;   //管道的一端
+        SkipSpace(cmdbuf, idx);
+        while (cmdbuf[idx] != 0 && cmdbuf[idx] != '|') {     //每段管道都添加到argsvec中
+            // 如果没有管道argsvec就只有一个元素
+            if (cmdbuf[idx] == '>')//重定向到文件名  并跳过这个文件名
+            {
+                ++idx;//跳过 '>'
+                SkipSpace(cmdbuf, idx);
+
+                arg->redirecFile = cmdbuf + idx;   //文件名
+
+                while (cmdbuf[idx] != ' ') ++idx;
+
+                cmdbuf[idx++] = 0;            //文件名后加nullptr
+            } else {//正常的命令参数
+
+                vec.push_back(cmdbuf + idx);
+
+                while (cmdbuf[idx] != 0 && cmdbuf[idx] != ' ')
+                    ++idx;
+                cmdbuf[idx++] = 0;
+            }
+        }
+        arg->argsvec.push_back(vec);
     }
-    argv[cnt] = nullptr;//参数数组结尾nullptr
-    return cnt;
+    ReplaceAlias(arg, alias);
+    return arg;
+}
+
+int utils::ReplaceAlias(utils::argument *args, Alias &alias) {
+    int i=0;
+    for (auto lst = args->argsvec.begin(); lst!= args->argsvec.end(); ++lst, ++i) {
+        std::string name(lst->front());
+        int cnt = alias.count(name);
+        if (cnt < 1)    //没有别名
+            return NO_ALIAS;
+        else {
+            std::string str = alias[name];
+            lst->pop_front();
+            char *buf = args->aliasbuf[i];
+            const char *tmp = str.c_str();
+            int x;
+            for(x=0; x<str.size(); ++x)
+            {
+                buf[x] = tmp[x];
+            }
+            buf[x] = 0;
+            std::list<char *> l;
+            int idx=0;
+            while(idx<str.size())
+            {
+                utils::SkipSpace(buf, idx);
+                l.push_back(buf+idx);
+                while(buf[idx]!=0 && buf[idx] != ' ') ++idx;
+                buf[idx++] = 0;
+            }
+
+            for(auto i = l.rbegin(); i!=l.rend(); ++i)
+                lst->push_front(*i);
+        }
+    }
 }
 
 #endif //MYSHELL_UTILITIES_HPP
