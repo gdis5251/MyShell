@@ -22,6 +22,7 @@ std::string relpath = "";
 std::string userhome = "";
 
 extern std::map<std::string, func> builtin_function;
+extern int utils::sfd;
 
 // 创建子进程，并让子进程执行刚才输入的命令
 int DoExecv(char *argv[])
@@ -35,10 +36,12 @@ int DoExecv(char *argv[])
     {
        execvp(argv[0], argv);
     }
+
+    utils::sfd = dup2(utils::sfd, 1);
     
     int status = 0;
     wait(&status);
-    
+
     if ((status & 0xff) == 0) // 正常退出
     {
         status >>= 8;
