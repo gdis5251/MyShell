@@ -11,6 +11,8 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <map>
+#include <sys/fcntl.h>
+#include <cstring>
 #include <vector>
 #include <list>
 
@@ -46,18 +48,26 @@ namespace utils {
         if (*ps != 0 && *ps == ' ')
             ++idx;
     }
+
+    utils::argument *Split(char *cmdbuf, size_t length, Alias &alias);
+
+    void Init(Alias &alias);
+
+    void DoRedirect(char *command);
+
+    int sfd;
 }
 
 struct utils::argument {
-    argument()
-    {//别名缓冲区
-        aliasbuf = new char*[16];
-        for(int i=0; i<16; ++i)
-        {
+    argument() {//别名缓冲区
+        aliasbuf = new char *[16];
+        redirecFile = nullptr;
+        for (int i = 0; i < 16; ++i) {
             aliasbuf[i] = new char[64];
         }
     }
-    char *redirecFile = nullptr; //重定向的目标文件
+
+    char *redirecFile; //重定向的目标文件
     std::vector<std::list<char *>> argsvec;
     char **aliasbuf;
     //这个vector保存 参数列表 用于管道
@@ -141,7 +151,6 @@ utils::argument *utils::Split(char *cmdbuf, size_t length, Alias &alias) {
 
                 cmdbuf[idx++] = 0;            //文件名后加nullptr
             } else {//正常的命令参数
-
                 vec.push_back(cmdbuf + idx);
 
                 while (cmdbuf[idx] != 0 && cmdbuf[idx] != ' ')
@@ -156,8 +165,8 @@ utils::argument *utils::Split(char *cmdbuf, size_t length, Alias &alias) {
 }
 
 int utils::ReplaceAlias(utils::argument *args, Alias &alias) {
-    int i=0;
-    for (auto lst = args->argsvec.begin(); lst!= args->argsvec.end(); ++lst, ++i) {
+    int i = 0;
+    for (auto lst = args->argsvec.begin(); lst != args->argsvec.end(); ++lst, ++i) {
         std::string name(lst->front());
         int cnt = alias.count(name);
         if (cnt < 1)    //没有别名
@@ -168,24 +177,65 @@ int utils::ReplaceAlias(utils::argument *args, Alias &alias) {
             char *buf = args->aliasbuf[i];
             const char *tmp = str.c_str();
             int x;
-            for(x=0; x<str.size(); ++x)
-            {
+            for (x = 0; x < str.size(); ++x) {
                 buf[x] = tmp[x];
             }
             buf[x] = 0;
             std::list<char *> l;
-            int idx=0;
-            while(idx<str.size())
-            {
+            int idx = 0;
+            while (idx < str.size()) {
                 utils::SkipSpace(buf, idx);
-                l.push_back(buf+idx);
-                while(buf[idx]!=0 && buf[idx] != ' ') ++idx;
+                l.push_back(buf + idx);
+                while (buf[idx] != 0 && buf[idx] != ' ') ++idx;
                 buf[idx++] = 0;
             }
 
-            for(auto i = l.rbegin(); i!=l.rend(); ++i)
+            for (auto i = l.rbegin(); i != l.rend(); ++i)
                 lst->push_front(*i);
         }
+    }
+    return 1;
+}
+
+void utils::DoRedirect(char *command) {
+    char *file = nullptr;
+    char *ptr = command;
+    int type_redirect = -1;
+    int fd;
+    utils::sfd = dup(1);
+
+    while (*ptr != '\0') {
+        if (*ptr == '>') //判断是否是重定向还是追加
+        {
+            *ptr++ = '\0';
+            type_redirect++;
+
+            if (*ptr == '>') {
+                *ptr++ = '\0';
+                type_redirect++;
+            }
+
+            while (*ptr == ' ') {
+                ptr++;
+            }
+            // 复制文件名
+            file = ptr;
+            while (*ptr != ' ' && *ptr != '\0') {
+                ptr++;
+            }
+            *ptr = '\0';
+
+            // 根据重定向或者追加来以不同的属性来创建文件
+            if (type_redirect == 0) {
+                fd = open(file, O_CREAT | O_TRUNC | O_WRONLY, 0664);
+            } else if (type_redirect == 1) {
+                fd = open(file, O_CREAT | O_APPEND | O_WRONLY, 0664);
+            }
+
+            dup2(fd, 1);
+        }
+
+        ptr++;
     }
 }
 

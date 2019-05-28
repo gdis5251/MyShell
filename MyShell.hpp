@@ -35,7 +35,9 @@ int DoExecv(char *argv[])
     {
        execvp(argv[0], argv);
     }
-    
+
+    utils::sfd = dup2(utils::sfd, 1);
+
     int status = 0;
     wait(&status);
     
@@ -51,11 +53,20 @@ int DoExecv(char *argv[])
 
 int Parse(utils::argument *args)
 {
+    //把argument 转成 arg
     char **arg = new char*[64];
     int i=0;
     for(auto it = args->argsvec[0].begin(); it!=args->argsvec[0].end(); ++it)
     {
         arg[i++] = *it;
+    }
+
+    if(args->argsvec.size() == 1)  //没有管道
+    {
+        if(args->redirecFile != nullptr)  //有重定向
+        {
+
+        }
     }
 
     if(builtin_function.count(arg[0]))

@@ -92,3 +92,8 @@
 - 添加别名操作，目前只能自己先在程序里定义好一些别名，然后等程序启动后可以直接输入别名操作。
 
   - 通过维护一个键值对，每当进行子程序要运行命令前，先判断一下是否有别名在键值对里，如果有，找到这个`key`对应的`value`，然后再给原`argv`更新一下参数就行。最后就是让子程序去执行就行。
+  
+- 使 `ls` 系列命令查询后文件或目录带有颜色。
+
+  - ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190522102701947.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MjY3ODUwNw==,size_16,color_FFFFFF,t_70)
+
