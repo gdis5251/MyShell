@@ -61,6 +61,7 @@ int Parse(utils::argument *args)
         arg[i++] = *it;
     }
 
+    /*
     if(args->argsvec.size() == 1)  //没有管道
     {
         if(args->redirecFile != nullptr)  //有重定向
@@ -68,6 +69,7 @@ int Parse(utils::argument *args)
 
         }
     }
+     */
 
     if(builtin_function.count(arg[0]))
     {
