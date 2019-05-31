@@ -245,13 +245,13 @@ void utils::DoRedirect(char *command) {
 class Command{
 public:
     Command(char *str)
-    : cmdline(str), redirect()
+            : cmdline(str), redirect()
     {
-		MetchRedirect();
-		Split();
+        MetchRedirect();
+        Split();
     }
 
-private:
+public:
     std::string cmdline;
     std::vector<std::list<std::string>> cmd;
     std::string redirect;
@@ -267,12 +267,13 @@ private:
             std::string arg(*pipbeg);
             std::sregex_token_iterator argbeg(arg.begin(), arg.end(), space, -1);  //分割参数
             std::list<std::string> lst;
-            cmd.push_back(lst);
+
             while(argbeg!=end)
             {
                 lst.push_back(*argbeg);
                 ++argbeg;
             }
+            cmd.push_back(lst);
             ++pipbeg;
         }
     }
@@ -288,7 +289,7 @@ private:
             std::string str(res1[0]);
             std::regex_search(str, res2, redir);
             redirect = res2[0];
-            cmdline = regex_replace(cmdline, rd, "");
+            cmdline = regex_replace(cmdline, rd, " ");
         }
     }
 };
