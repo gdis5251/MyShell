@@ -15,6 +15,7 @@
 #include <cstring>
 #include <vector>
 #include <list>
+#include <regex>
 
 extern std::string host;
 extern std::string user;
@@ -238,5 +239,58 @@ void utils::DoRedirect(char *command) {
         ptr++;
     }
 }
+
+
+//把解析字符串封装到类中
+class Command{
+public:
+    Command(char *str)
+    : cmdline(str), redirect()
+    {
+		MetchRedirect();
+		Split();
+    }
+
+private:
+    std::string cmdline;
+    std::vector<std::list<std::string>> cmd;
+    std::string redirect;
+private:
+    void Split()
+    {
+        std::regex pip("\\s+[|]\\s+");
+        std::regex space("\\s+");
+        std::sregex_token_iterator pipbeg(cmdline.begin(), cmdline.end(), pip, -1);
+        std::sregex_token_iterator end;
+        while(pipbeg!=end)  //分割管道
+        {
+            std::string arg(*pipbeg);
+            std::sregex_token_iterator argbeg(arg.begin(), arg.end(), space, -1);  //分割参数
+            std::list<std::string> lst;
+            cmd.push_back(lst);
+            while(argbeg!=end)
+            {
+                lst.push_back(*argbeg);
+                ++argbeg;
+            }
+            ++pipbeg;
+        }
+    }
+
+    void MetchRedirect()
+    {
+        std::smatch res1;
+        std::smatch res2;
+        std::regex rd(" [>12]*> [a-zA-Z.]+ *");
+        std::regex redir("[a-zA-Z.]+");
+        if(std::regex_search(cmdline, res1, rd))  //匹配到了重定向
+        {
+            std::string str(res1[0]);
+            std::regex_search(str, res2, redir);
+            redirect = res2[0];
+            cmdline = regex_replace(cmdline, rd, "");
+        }
+    }
+};
 
 #endif //MYSHELL_UTILITIES_HPP
