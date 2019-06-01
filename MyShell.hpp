@@ -38,7 +38,7 @@ int DoExecv(char *argv[])
     }
 
     utils::sfd = dup2(utils::sfd, 1);
-    
+
     int status = 0;
     wait(&status);
 
@@ -52,15 +52,32 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-int Parse(char **argv, size_t args, Alias& alias)
+int Parse(Command &cmd)
 {
-    std::string f(argv[0]);
-    if(builtin_function.count(f))
+    char **arg1 = cmd.GetArgv(0);
+    if(cmd.HasRediredt())   //重定向
     {
-        return builtin_function[f](argv, args);
+        int old = dup(STDOUT_FILENO);
+        close(STDOUT_FILENO);
+        const char *file = cmd.GetRedir();
+        int fd = open(file, );
+    }
+    else if(cmd.HasPipe())    //管道
+    {
+
+    }
+    else{     //单行命令
+        utils::exe(arg1[0], arg1);
+    }
+
+    /*
+    if(builtin_function.count(arg[0]))
+    {
+        return builtin_function[arg[0]](arg, args->argsvec.size());
     }
     else
     {
+        return DoExecv(arg);
         // 判断是否是 alias 定义的别名
         if (alias.count(f))
         { 
@@ -94,6 +111,7 @@ int Parse(char **argv, size_t args, Alias& alias)
 
         return DoExecv(argv);
     }
+     */
 }
 
 void RelPath()
@@ -131,10 +149,10 @@ void MyShell()
         if(length == 0)
             continue;
         // 3.分割命令行参数
-        char **argv = argsbuf;
-        int args = utils::Split(command_buf, argv, length);
+        //utils::argument* argv = utils::Split(command_buf, length, alias);
+        Command cmd(command_buf,alias);
 
-        int exit_code = Parse(argv, static_cast<size_t>(args), alias);
+        int exit_code = Parse(cmd);
 
         if(exit_code == -1)
             break;
