@@ -51,26 +51,25 @@ int DoExecv(char *argv[])
     return -1;
 }
 
-int Parse(utils::argument *args)
+int Parse(Command &cmd)
 {
-    //把argument 转成 arg
-    char **arg = new char*[64];
-    int i=0;
-    for(auto it = args->argsvec[0].begin(); it!=args->argsvec[0].end(); ++it)
+    char **arg1 = cmd.GetArgv(0);
+    if(cmd.HasRediredt())   //重定向
     {
-        arg[i++] = *it;
+        int old = dup(STDOUT_FILENO);
+        close(STDOUT_FILENO);
+        const char *file = cmd.GetRedir();
+        int fd = open(file, );
+    }
+    else if(cmd.HasPipe())    //管道
+    {
+
+    }
+    else{     //单行命令
+        utils::exe(arg1[0], arg1);
     }
 
     /*
-    if(args->argsvec.size() == 1)  //没有管道
-    {
-        if(args->redirecFile != nullptr)  //有重定向
-        {
-
-        }
-    }
-     */
-
     if(builtin_function.count(arg[0]))
     {
         return builtin_function[arg[0]](arg, args->argsvec.size());
@@ -79,6 +78,7 @@ int Parse(utils::argument *args)
     {
         return DoExecv(arg);
     }
+     */
 }
 
 void RelPath()
@@ -116,9 +116,10 @@ void MyShell()
         if(length == 0)
             continue;
         // 3.分割命令行参数
-        utils::argument* argv = utils::Split(command_buf, length, alias);
+        //utils::argument* argv = utils::Split(command_buf, length, alias);
+        Command cmd(command_buf,alias);
 
-        int exit_code = Parse(argv);
+        int exit_code = Parse(cmd);
 
         if(exit_code == -1)
             break;

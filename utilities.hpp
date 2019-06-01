@@ -57,6 +57,23 @@ namespace utils {
     void DoRedirect(char *command);
 
     int sfd;
+
+    int exe(char *name, char *argv[]);
+}
+
+int utils::exe(char *name, char *argv[])
+{
+    pid_t c = fork();
+    int stat=0;
+    if(c>0)
+    {//父进程等待子进程
+        stat = wait(&stat);
+    } else if(c == 0){
+        return execvp(name, argv);
+    } else{
+        perror("fork");
+    }
+    return stat;
 }
 
 struct utils::argument {
@@ -244,17 +261,52 @@ void utils::DoRedirect(char *command) {
 //把解析字符串封装到类中
 class Command{
 public:
-    Command(char *str)
-            : cmdline(str), redirect()
+    Command(char *str, Alias &alias)
+            : cmdline(str), redirect(), als(alias)
     {
         MetchRedirect();
         Split();
+        Alias();
     }
 
-public:
+    bool HasPipe()
+    {
+        if(cmd.size()>1)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    bool HasRediredt()
+    {
+        return !redirect.empty();
+    }
+
+    char **GetArgv(int idx)
+    {
+        if(idx > cmd.size())
+            return nullptr;
+        std::list<std::string> &lp = cmd[idx];
+        char **args = new char*[lp.size()+1]();
+        auto it = lp.begin();
+        for(int i=0; i<lp.size(); ++i, ++it)
+        {
+            args[i] = const_cast<char*>(it->c_str());
+        }
+        return args;
+    }
+
+    const char *GetRedir()
+    {
+        return redirect.c_str();
+    }
+private:
     std::string cmdline;
     std::vector<std::list<std::string>> cmd;
     std::string redirect;
+    std::string redirectstr;
+    Alias &als;
 private:
     void Split()
     {
@@ -280,16 +332,36 @@ private:
 
     void MetchRedirect()
     {
-        std::smatch res1;
-        std::smatch res2;
-        std::regex rd(" [>12]*> [a-zA-Z.]+ *");
-        std::regex redir("[a-zA-Z.]+");
+        std::smatch res1;   //rd的结果
+        std::smatch res2;   //redir的结果
+        std::smatch res3;   //restr的结果
+        std::regex rd(" [>12]*> [a-zA-Z.]+ *");    //匹配重定向和目标的正则表达式
+        std::regex redir("[a-zA-Z.]+");      //目标的正则表达式
+        std::regex rdstr("[>12]*>");           //重定向标志
         if(std::regex_search(cmdline, res1, rd))  //匹配到了重定向
         {
-            std::string str(res1[0]);
+            std::string str(res1[0]);        //res1是rd的结果
             std::regex_search(str, res2, redir);
-            redirect = res2[0];
+            std::regex_search(str, res3, rdstr);
+            redirectstr = res3[0];     //重定向标志
+            redirect = res2[0];        //重定向目的地
             cmdline = regex_replace(cmdline, rd, " ");
+        }
+    }
+
+    void Alias()
+    {
+        for(auto i : cmd)
+        {
+            if(als.count(i.front()))
+            {
+                std::regex sp("\\s+");
+                std::string str = als[i.front()];
+                i.pop_front();
+                std::sregex_token_iterator beg(str.begin(), str.end(), sp, -1);
+                std::sregex_token_iterator end;
+                i.insert(i.begin(), beg, end);
+            }
         }
     }
 };
