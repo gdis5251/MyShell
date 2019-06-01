@@ -22,6 +22,7 @@ std::string relpath = "";
 std::string userhome = "";
 
 extern std::map<std::string, func> builtin_function;
+extern int utils::sfd;
 
 // 创建子进程，并让子进程执行刚才输入的命令
 int DoExecv(char *argv[])
@@ -40,7 +41,7 @@ int DoExecv(char *argv[])
 
     int status = 0;
     wait(&status);
-    
+
     if ((status & 0xff) == 0) // 正常退出
     {
         status >>= 8;
@@ -77,6 +78,38 @@ int Parse(Command &cmd)
     else
     {
         return DoExecv(arg);
+        // 判断是否是 alias 定义的别名
+        if (alias.count(f))
+        { 
+            f = alias[f.c_str()];
+            std::string tmp_str;
+            tmp_str = f.c_str();
+
+            // 重新拆分字符串 
+            char *tmp_argv[BUF_SIZE] = {0};
+            int num = utils::Split(const_cast<char *>(tmp_str.c_str()), tmp_argv, f.size());  
+
+            argv[0] = tmp_argv[0];
+            // 将后续的参数补到 argv 里
+            int i = 0;
+            for (i = 1; i < num; i++)
+            {
+                argv[args + i - 1] = tmp_argv[i];
+            }
+            argv[args + i - 1] = 0;
+
+            // 更新 args
+            args += i - 1;
+        }
+
+        // ls 的系列命令需要加颜色
+        if (strcmp(argv[0], "ls") == 0)
+        {
+            argv[args] = const_cast<char*>("--color=auto");
+            argv[args + 1] = 0;
+        }
+
+        return DoExecv(argv);
     }
      */
 }

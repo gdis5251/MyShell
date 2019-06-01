@@ -38,7 +38,6 @@ namespace utils {
     struct argument;
 
     size_t GetLine(char *, size_t);
-
     argument *Split(char *, size_t, Alias &);
 
     void Init(Alias &alias);
@@ -59,6 +58,10 @@ namespace utils {
     int sfd;
 
     int exe(char *name, char *argv[]);
+    int Split(char *, char **, size_t);
+    void Init(Alias& alias);
+    void DoRedirect(char *command);
+    int sfd;
 }
 
 int utils::exe(char *name, char *argv[])
@@ -254,9 +257,23 @@ void utils::DoRedirect(char *command) {
         }
 
         ptr++;
+int utils::Split(char *command, char **argv, size_t cmdlength)
+{
+    utils::DoRedirect(command);// 现在处理重定向或追加
+    size_t idx = 0;
+    int cnt = 0;     //参数个数
+    while(idx < cmdlength && command[idx] != '\0')
+    {
+        //处理空格
+        while(command[idx] == ' ')
+            ++idx;
+
+        argv[cnt++] = command+idx;//参数的开始
+        while(idx < cmdlength && command[idx] != ' ' && command[idx] != '\0')
+            ++idx;
+        command[idx++] = 0;  //参数结尾补0
     }
 }
-
 
 //把解析字符串封装到类中
 class Command{
@@ -365,5 +382,55 @@ private:
         }
     }
 };
+=======
+void utils::DoRedirect(char *command)
+{
+    char *file = nullptr;
+    char *ptr = command;
+    int type_redirect = -1;
+    int fd;
+    utils::sfd = dup(1);
+
+    while (*ptr != '\0')
+    {
+        if (*ptr == '>') //判断是否是重定向还是追加
+        {
+            *ptr++ = '\0';
+            type_redirect++;
+
+            if (*ptr == '>')
+            {
+                *ptr++ = '\0';
+                type_redirect++;
+            }
+
+            while (*ptr == ' ')
+            {
+                ptr++;
+            }
+            // 复制文件名
+            file = ptr;
+            while (*ptr != ' ' && *ptr != '\0')
+            {
+                ptr++;
+            }
+            *ptr = '\0';
+
+            // 根据重定向或者追加来以不同的属性来创建文件
+            if (type_redirect == 0)
+            {
+                fd = open(file, O_CREAT | O_TRUNC | O_WRONLY, 0664);
+            }
+            else if (type_redirect == 1)
+            {
+                fd = open(file, O_CREAT | O_APPEND | O_WRONLY, 0664);
+            }
+
+            dup2(fd, 1);
+        }
+
+        ptr++;
+    }
+}
 
 #endif //MYSHELL_UTILITIES_HPP
