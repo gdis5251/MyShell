@@ -54,19 +54,21 @@ int DoExecv(char *argv[])
 int Parse(Command &cmd)
 {
     char **arg1 = cmd.GetArgv(0);
+    int length = cmd.GetArgLen(0);
     if(cmd.HasRediredt())   //重定向
     {
         int old = dup(STDOUT_FILENO);
         close(STDOUT_FILENO);
         const char *file = cmd.GetRedir();
-        int fd = open(file, );
+        int flag = cmd.GetRedirectArg();
+        int fd = open(file, flag);
     }
     else if(cmd.HasPipe())    //管道
     {
 
     }
     else{     //单行命令
-        utils::exe(arg1[0], arg1);
+        utils::exe(arg1[0], arg1, length);
     }
 
     /*

@@ -16,6 +16,7 @@
 #include <vector>
 #include <list>
 #include <regex>
+#include "builtincommand.hpp"
 
 extern std::string host;
 extern std::string user;
@@ -58,21 +59,27 @@ namespace utils {
 
     int sfd;
 
-    int exe(char *name, char *argv[]);
+    int exe(char *name, char *argv[], int length);
 }
 
-int utils::exe(char *name, char *argv[])
+int utils::exe(char *name, char *argv[], int length)
 {
-    pid_t c = fork();
     int stat=0;
-    if(c>0)
-    {//父进程等待子进程
-        stat = wait(&stat);
-    } else if(c == 0){
-        return execvp(name, argv);
+    if(builtin_function.count(name))
+    {
+        stat = builtin_function[name](argv, length);
     } else{
-        perror("fork");
+        pid_t c = fork();
+        if(c>0)
+        {//父进程等待子进程
+            stat = wait(&stat);
+        } else if(c == 0){
+            return execvp(name, argv);
+        } else{
+            perror("fork");
+        }
     }
+
     return stat;
 }
 
@@ -266,7 +273,7 @@ public:
     {
         MetchRedirect();
         Split();
-        Alias();
+        AliasReplace();
     }
 
     bool HasPipe()
@@ -276,6 +283,11 @@ public:
             return true;
         }
         return false;
+    }
+
+    int GetArgLen(int idx)
+    {
+        return cmd[idx].size();
     }
 
     bool HasRediredt()
@@ -300,6 +312,28 @@ public:
     const char *GetRedir()
     {
         return redirect.c_str();
+    }
+
+    int GetRedirectArg()
+    {
+        if(redirectstr.size()==1)
+        {
+            return O_WRONLY;
+        }
+        else if(redirectstr.size() == 2)
+        {
+            switch(redirectstr[0])
+            {//TODO: tbd
+                case '1':
+                    return O_RDWR;
+                case '2':
+                    return O_RDWR;
+                case '>':
+                    return O_APPEND;
+                default:
+                    return O_WRONLY;
+            }
+        }
     }
 private:
     std::string cmdline;
@@ -349,7 +383,7 @@ private:
         }
     }
 
-    void Alias()
+    void AliasReplace()
     {
         for(auto i : cmd)
         {
