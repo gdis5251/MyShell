@@ -85,6 +85,7 @@ void MyShell()
         if(length == 0)
             continue;
         // 3.分割命令行参数
+        //utils::argument* argv = utils::Split(command_buf, length, alias);
         Command cmd(command_buf,alias);
 
         int exit_code = Parse(cmd);
