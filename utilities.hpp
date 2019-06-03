@@ -33,7 +33,6 @@ const int NO_ALIAS = -123;
 
 // 维护一个键值对，用来定义别名
 typedef std::map<std::string, std::string> Alias;
-typedef std::map<std::string, std::string>::iterator AliasIter;
 
 namespace utils {
     struct argument;
@@ -72,7 +71,15 @@ int utils::exe(char *name, char *argv[], int length)
         pid_t c = fork();
         if(c>0)
         {//父进程等待子进程
-            stat = wait(&stat);
+            wait(&stat);
+            if ((stat & 0xff) == 0) // 正常退出
+            {
+                stat >>= 8;
+                return (stat & 0xff);
+            }
+
+            std::cout << "Abnormal Exit ! The signal is :" << (stat & 0x7f) << std::endl;
+            return -1;
         } else if(c == 0){
             return execvp(name, argv);
         } else{
@@ -318,7 +325,7 @@ public:
     {
         if(redirectstr.size()==1)
         {
-            return O_WRONLY;
+            return O_CREAT | O_TRUNC | O_WRONLY;;
         }
         else if(redirectstr.size() == 2)
         {
@@ -329,9 +336,9 @@ public:
                 case '2':
                     return O_RDWR;
                 case '>':
-                    return O_APPEND;
+                    return O_APPEND | O_CREAT | O_WRONLY;
                 default:
-                    return O_WRONLY;
+                    return O_CREAT | O_TRUNC | O_WRONLY;
             }
         }
     }
@@ -385,7 +392,7 @@ private:
 
     void AliasReplace()
     {
-        for(auto i : cmd)
+        for(auto &i : cmd)
         {
             if(als.count(i.front()))
             {

@@ -23,34 +23,6 @@ std::string userhome = "";
 
 extern std::map<std::string, func> builtin_function;
 
-// 创建子进程，并让子进程执行刚才输入的命令
-int DoExecv(char *argv[])
-{
-    // 创建子进程
-    pid_t id = fork();
-    if (id < 0)
-        perror("fork");
-
-    if (id == 0)// Child
-    {
-       execvp(argv[0], argv);
-    }
-
-    utils::sfd = dup2(utils::sfd, 1);
-
-    int status = 0;
-    wait(&status);
-    
-    if ((status & 0xff) == 0) // 正常退出
-    {
-        status >>= 8;
-        return (status & 0xff);
-    }
-
-    std::cout << "Abnormal Exit ! The signal is :" << (status & 0x7f) << std::endl;
-    return -1;
-}
-
 int Parse(Command &cmd)
 {
     char **arg1 = cmd.GetArgv(0);
@@ -61,7 +33,13 @@ int Parse(Command &cmd)
         close(STDOUT_FILENO);
         const char *file = cmd.GetRedir();
         int flag = cmd.GetRedirectArg();
-        int fd = open(file, flag);
+        int fd = open(file, flag, 0664);
+        int ret = utils::exe(arg1[0], arg1, length);
+
+        close(fd);
+        dup(old);
+        close(old);
+        return ret;
     }
     else if(cmd.HasPipe())    //管道
     {
@@ -70,17 +48,6 @@ int Parse(Command &cmd)
     else{     //单行命令
         utils::exe(arg1[0], arg1, length);
     }
-
-    /*
-    if(builtin_function.count(arg[0]))
-    {
-        return builtin_function[arg[0]](arg, args->argsvec.size());
-    }
-    else
-    {
-        return DoExecv(arg);
-    }
-     */
 }
 
 void RelPath()
@@ -118,7 +85,6 @@ void MyShell()
         if(length == 0)
             continue;
         // 3.分割命令行参数
-        //utils::argument* argv = utils::Split(command_buf, length, alias);
         Command cmd(command_buf,alias);
 
         int exit_code = Parse(cmd);

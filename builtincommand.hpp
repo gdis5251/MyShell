@@ -23,7 +23,6 @@ extern std::string relpath;
 extern std::string userhome;
 
 typedef std::map<std::string, std::string> Alias;
-typedef std::map<std::string, std::string>::iterator AliasIter;
 typedef std::function<int(char **, size_t)> func;
 
 std::map<std::string, func> builtin_function;
@@ -36,8 +35,8 @@ namespace builtin {
     int exit(char **, size_t);
 }
 
-int builtin::cd(char **argv, size_t args) {
-    if (args > 2) {
+int builtin::cd(char **argv, size_t argc) {
+    if (argc > 2) {
         std::cout << "Shell: too many args" << std::endl;
         return -1;
     }
@@ -56,9 +55,9 @@ int builtin::cd(char **argv, size_t args) {
     return ret;
 }
 
-int builtin::pwd(char **argv, size_t args) {
+int builtin::pwd(char **argv, size_t argc) {
     (void) argv;
-    (void) args;
+    (void) argc;
     std::cout << path << std::endl;
     fflush(stdout);
     return 1;
@@ -69,18 +68,17 @@ void exit_shell()
     exit(1);
 }
 
-int builtin::exit(char **argv, size_t args) {
+int builtin::exit(char **argv, size_t argc) {
+    (void)argv;
+    (void)argc;
     exit_shell();
     return -1;
 }
-
-
 
 void InitBuiltinFunction() {
     builtin_function.insert(std::make_pair<std::string, func>("cd", builtin::cd));
     builtin_function.insert(std::make_pair<std::string, func>("pwd", builtin::pwd));
     builtin_function.insert(std::make_pair<std::string, func>("exit", builtin::exit));
-
 }
 
 #endif //MYSHELL_BUILTINCOMMAND_HPP
