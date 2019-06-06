@@ -137,7 +137,7 @@ void utils::Init(Alias &alias) {
 
     // 生成一个默认的键值对
     MakeDefualtAlias(alias);
-    InitBuiltinFunction();
+    InitBuiltinFunction(alias);
 }
 
 size_t utils::GetLine(char *buf, size_t bufsize) {
@@ -277,6 +277,7 @@ public:
     Command(char *str, Alias &alias)
             : cmdline(str), redirect(), als(alias)
     {
+        //Exec = inlineFunc();
         MetchRedirect();
         Split();
         AliasReplace();
@@ -341,6 +342,7 @@ public:
             }
         }
     }
+
 private:
     std::string cmdline;
     std::vector<std::list<std::string>> cmd;
@@ -404,6 +406,7 @@ private:
             }
         }
     }
+
 };
 
 #endif //MYSHELL_UTILITIES_HPP

@@ -26,6 +26,7 @@ typedef std::map<std::string, std::string> Alias;
 typedef std::function<int(char **, size_t)> func;
 
 std::map<std::string, func> builtin_function;
+Alias *als;
 
 namespace builtin {
     int cd(char **, size_t);
@@ -33,6 +34,8 @@ namespace builtin {
     int pwd(char **, size_t);
 
     int exit(char **, size_t);
+
+    int alias(char **, size_t);
 }
 
 int builtin::cd(char **argv, size_t argc) {
@@ -75,10 +78,41 @@ int builtin::exit(char **argv, size_t argc) {
     return -1;
 }
 
-void InitBuiltinFunction() {
+
+int builtin::alias(char **argv, size_t argc) {
+    std::string key;
+    std::string raw;
+    std::string str;
+    int idx = 1;
+    while(argv[idx]!=nullptr)
+    {
+        str+=argv[idx++];
+        str+= ' ';
+    }
+
+    idx = 0;
+    while(str[idx]!='=')
+    {
+        key+=str[idx++];
+    }
+    idx+=2;
+    while(str[idx]!='"')
+    {
+        raw += str[idx++];
+    }
+
+    Alias &other = *als;
+    other[key] = raw;
+
+    return 0;
+}
+
+void InitBuiltinFunction(Alias &al) {
+    als = &al;
     builtin_function.insert(std::make_pair<std::string, func>("cd", builtin::cd));
     builtin_function.insert(std::make_pair<std::string, func>("pwd", builtin::pwd));
     builtin_function.insert(std::make_pair<std::string, func>("exit", builtin::exit));
+    builtin_function.insert(std::make_pair<std::string, func>("alias", builtin::alias));
 }
 
 #endif //MYSHELL_BUILTINCOMMAND_HPP

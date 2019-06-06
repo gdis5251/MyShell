@@ -23,8 +23,14 @@ std::string userhome = "";
 
 extern std::map<std::string, func> builtin_function;
 
-int Parse(Command &cmd)
+int Execute(Command &cmd)
 {
+    /*
+    if(!cmd.isExec())
+    {
+        return 0;
+    }
+     */
     char **arg1 = cmd.GetArgv(0);
     int length = cmd.GetArgLen(0);
     if(cmd.HasRediredt())   //重定向
@@ -43,10 +49,10 @@ int Parse(Command &cmd)
     }
     else if(cmd.HasPipe())    //管道
     {
-
+        return -1;
     }
     else{     //单行命令
-        utils::exe(arg1[0], arg1, length);
+        return utils::exe(arg1[0], arg1, length);
     }
 }
 
@@ -85,10 +91,8 @@ void MyShell()
         if(length == 0)
             continue;
         // 3.分割命令行参数
-        //utils::argument* argv = utils::Split(command_buf, length, alias);
         Command cmd(command_buf,alias);
-
-        int exit_code = Parse(cmd);
+        int exit_code = Execute(cmd);
 
         if(exit_code == -1)
             break;
