@@ -16,6 +16,7 @@
 #include <vector>
 #include <list>
 #include <regex>
+#include "builtincommand.hpp"
 
 extern std::string host;
 extern std::string user;
@@ -32,12 +33,12 @@ const int NO_ALIAS = -123;
 
 // 维护一个键值对，用来定义别名
 typedef std::map<std::string, std::string> Alias;
-typedef std::map<std::string, std::string>::iterator AliasIter;
 
 namespace utils {
     struct argument;
 
     size_t GetLine(char *, size_t);
+
     argument *Split(char *, size_t, Alias &);
 
     void Init(Alias &alias);
@@ -57,24 +58,33 @@ namespace utils {
 
     int sfd;
 
-    int exe(char *name, char *argv[]);
-    int Split(char *, char **, size_t);
-    void Init(Alias& alias);
-    void DoRedirect(char *command);
-    int sfd;
+    int exe(char *name, char *argv[], int length);
 }
 
-int utils::exe(char *name, char *argv[])
+int utils::exe(char *name, char *argv[], int length)
 {
-    pid_t c = fork();
     int stat=0;
-    if(c>0)
-    {//父进程等待子进程
-        stat = wait(&stat);
-    } else if(c == 0){
-        return execvp(name, argv);
+    if(builtin_function.count(name))
+    {
+        stat = builtin_function[name](argv, length);
     } else{
-        perror("fork");
+        pid_t c = fork();
+        if(c>0)
+        {//父进程等待子进程
+            wait(&stat);
+            if ((stat & 0xff) == 0) // 正常退出
+            {
+                stat >>= 8;
+                return (stat & 0xff);
+            }
+
+            std::cout << "Abnormal Exit ! The signal is :" << (stat & 0x7f) << std::endl;
+            return -1;
+        } else if(c == 0){
+            return execvp(name, argv);
+        } else{
+            perror("fork");
+        }
     }
     return stat;
 }
@@ -127,7 +137,7 @@ void utils::Init(Alias &alias) {
 
     // 生成一个默认的键值对
     MakeDefualtAlias(alias);
-    InitBuiltinFunction();
+    InitBuiltinFunction(alias);
 }
 
 size_t utils::GetLine(char *buf, size_t bufsize) {
@@ -257,23 +267,9 @@ void utils::DoRedirect(char *command) {
         }
 
         ptr++;
-int utils::Split(char *command, char **argv, size_t cmdlength)
-{
-    utils::DoRedirect(command);// 现在处理重定向或追加
-    size_t idx = 0;
-    int cnt = 0;     //参数个数
-    while(idx < cmdlength && command[idx] != '\0')
-    {
-        //处理空格
-        while(command[idx] == ' ')
-            ++idx;
-
-        argv[cnt++] = command+idx;//参数的开始
-        while(idx < cmdlength && command[idx] != ' ' && command[idx] != '\0')
-            ++idx;
-        command[idx++] = 0;  //参数结尾补0
     }
 }
+
 
 //把解析字符串封装到类中
 class Command{
@@ -281,9 +277,10 @@ public:
     Command(char *str, Alias &alias)
             : cmdline(str), redirect(), als(alias)
     {
+        //Exec = inlineFunc();
         MetchRedirect();
         Split();
-        Alias();
+        AliasReplace();
     }
 
     bool HasPipe()
@@ -293,6 +290,11 @@ public:
             return true;
         }
         return false;
+    }
+
+    int GetArgLen(int idx)
+    {
+        return cmd[idx].size();
     }
 
     bool HasRediredt()
@@ -318,6 +320,29 @@ public:
     {
         return redirect.c_str();
     }
+
+    int GetRedirectArg()
+    {
+        if(redirectstr.size()==1)
+        {
+            return O_CREAT | O_TRUNC | O_WRONLY;;
+        }
+        else if(redirectstr.size() == 2)
+        {
+            switch(redirectstr[0])
+            {//TODO: tbd
+                case '1':
+                    return O_RDWR;
+                case '2':
+                    return O_RDWR;
+                case '>':
+                    return O_APPEND | O_CREAT | O_WRONLY;
+                default:
+                    return O_CREAT | O_TRUNC | O_WRONLY;
+            }
+        }
+    }
+
 private:
     std::string cmdline;
     std::vector<std::list<std::string>> cmd;
@@ -366,9 +391,9 @@ private:
         }
     }
 
-    void Alias()
+    void AliasReplace()
     {
-        for(auto i : cmd)
+        for(auto &i : cmd)
         {
             if(als.count(i.front()))
             {
@@ -381,56 +406,7 @@ private:
             }
         }
     }
+
 };
-=======
-void utils::DoRedirect(char *command)
-{
-    char *file = nullptr;
-    char *ptr = command;
-    int type_redirect = -1;
-    int fd;
-    utils::sfd = dup(1);
-
-    while (*ptr != '\0')
-    {
-        if (*ptr == '>') //判断是否是重定向还是追加
-        {
-            *ptr++ = '\0';
-            type_redirect++;
-
-            if (*ptr == '>')
-            {
-                *ptr++ = '\0';
-                type_redirect++;
-            }
-
-            while (*ptr == ' ')
-            {
-                ptr++;
-            }
-            // 复制文件名
-            file = ptr;
-            while (*ptr != ' ' && *ptr != '\0')
-            {
-                ptr++;
-            }
-            *ptr = '\0';
-
-            // 根据重定向或者追加来以不同的属性来创建文件
-            if (type_redirect == 0)
-            {
-                fd = open(file, O_CREAT | O_TRUNC | O_WRONLY, 0664);
-            }
-            else if (type_redirect == 1)
-            {
-                fd = open(file, O_CREAT | O_APPEND | O_WRONLY, 0664);
-            }
-
-            dup2(fd, 1);
-        }
-
-        ptr++;
-    }
-}
 
 #endif //MYSHELL_UTILITIES_HPP
